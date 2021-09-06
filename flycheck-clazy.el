@@ -43,7 +43,7 @@
 
 (flycheck-def-option-var flycheck-clazy-extra-args '() c/c++-clazy
   "Extra arguments to pass to clazy"
-  :type (repeat 'list)
+  :type 'list
   :safe (lambda (x) (-all? 'stringp x)))
 
 (flycheck-def-option-var flycheck-clazy-root nil c/c++-clazy
@@ -56,17 +56,17 @@ If nil, `flycheck-clazy' will try to automatically determine the root directory 
   "Determine the project root for CHECKER using in the following order:
 `flycheck-clazy-root', `projectile-root', location of a `compile_commands.json', `vc-root' and current directory."
   (let ((project-root flycheck-clazy-root))
-    (when (and (not project-root)
-               (member 'projectile-mode minor-mode-list))
-      (setq project-root (projectile-project-root)))
-    (unless project-root
-      (setq project-root (locate-dominating-file (buffer-file-name) "compile_commands.json")))
-    (unless project-root
-      (setq project-root (vc-root-dir)))
-    (unless project-root
-      (message "Could not determine project root, trying current directory.")
-      (setq project-root (flycheck-clazy--current-source-dir)))
-    project-root))
+	(when (and (not project-root)
+			   (member 'projectile-mode minor-mode-list))
+	  (setq project-root (projectile-project-root)))
+	(unless project-root
+	  (setq project-root (locate-dominating-file (buffer-file-name) "compile_commands.json")))
+	(unless project-root
+	  (setq project-root (vc-root-dir)))
+	(unless project-root
+	  (message "Could not determine project root, trying current directory.")
+	  (setq project-root (flycheck-clazy--current-source-dir)))
+	project-root))
 
 (defun flycheck-clazy--current-source-dir ()
   "Directory of current source file."
@@ -75,21 +75,21 @@ If nil, `flycheck-clazy' will try to automatically determine the root directory 
 (defun flycheck-clazy--verify (_checker)
   "Verifies CHECKER."
   (list (flycheck-verification-result-new
-         :label "Project Root"
-         :message (format "%s" (flycheck-clazy--find-project-root nil))
-         :face (if (file-directory-p (flycheck-clazy--find-project-root nil)) 'success '(bold error)))))
+		 :label "Project Root"
+		 :message (format "%s" (flycheck-clazy--find-project-root nil))
+		 :face (if (file-directory-p (flycheck-clazy--find-project-root nil)) 'success '(bold error)))))
 
 (flycheck-define-checker c/c++-clazy
   "A flycheck backend for the clazy code analyzer"
   :command ("clazy-standalone"
-            (option "-p" flycheck-clazy-build-path)
-            (eval (concat "-extra-arg=-I" (flycheck-clazy--current-source-dir)))
-            (eval (mapconcat 'identity flycheck-clazy-extra-args " "))
-            "--ignore-included-files"
-            source)
+			(option "-p" flycheck-clazy-build-path)
+			(eval (concat "-extra-arg=-I" (flycheck-clazy--current-source-dir)))
+			(eval (mapconcat 'identity flycheck-clazy-extra-args " "))
+			"--ignore-included-files"
+			source)
   :error-patterns ((error line-start (file-name) ":" line ":" column ": error: " (message) line-end)
-                   (warning line-start (file-name) ":" line ":" column ": warning: " (message) line-end)
-                   (info line-start (file-name) ":" line ":" column ": note: " (message) line-end))
+				   (warning line-start (file-name) ":" line ":" column ": warning: " (message) line-end)
+				   (info line-start (file-name) ":" line ":" column ": note: " (message) line-end))
   :working-directory flycheck-clazy--find-project-root
   :modes (c-mode c++-mode)
   :verify flycheck-clazy--verify
